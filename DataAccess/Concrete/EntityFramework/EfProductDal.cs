@@ -1,7 +1,12 @@
-﻿using DataAccess.Abstract;
+﻿using Core.DataAccess;
+using Core.DataAccess.EntityFramework;
+using DataAccess.Abstract;
 using Entities.Concrete;
+using Entities.DTOs;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
@@ -9,36 +14,21 @@ using System.Threading.Tasks;
 
 namespace DataAccess.Concrete.EntityFramework
 {
-    public class EfProductDal : IProductDal
+    public class EfProductDal : EfEntityRepositoryBase<Product, NorthwindContext>, IProductDal
     {
-        public void Add(Product entity)
+        public List<ProductDetailDto> GetProductsDetail()
         {
-            throw new NotImplementedException();
-        }
+            using (NorthwindContext context = new NorthwindContext())
+            {
+                var result = from p in context.Products
+                             join c in context.Categories
+                             on p.CategoryId equals c.CategoryId
+                             select new ProductDetailDto { CategoryName = c.CategoryName, ProductId = p.ProductId, 
+                                 ProductName = p.ProductName,
+                                 UnitsInStock = p.UnitsInStock };
 
-        public void Delete(Product entity)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Product Get(Expression<Func<Product, bool>> filter = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public List<Product> GetAll(Expression<Func<Product, bool>> filter = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public List<Product> GetAllByCategory(int categoryId)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Update(Product entityentity)
-        {
-            throw new NotImplementedException();
+                return result.ToList();
+            }
         }
     }
 }
