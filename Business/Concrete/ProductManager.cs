@@ -4,6 +4,7 @@ using Business.Constants;
 using Business.ValidationRules.FluentValidation;
 using Core;
 using Core.Aspects.Autofac.Validation;
+using Core.Utilities.Business;
 using Core.Utilities.Results;
 using DataAccess.Abstract;
 using DataAccess.Concrete.InMemory;
@@ -33,13 +34,17 @@ namespace Business.Concrete
         [ValidationAspect(typeof(ProductValidator))]
         public IResult Add(Product product)
         {
-            if (CheckIfProductCountOfCategoryCorrect(product.CategoryId).Succes)
+
+          IResult result =  BusinessRules.Run(CheckIfProductCountOfCategoryCorrect(product.CategoryId),
+                CheckIfProductNameExist(product.ProductName));
+
+            if(result!=null)
             {
-                _productDal.Add(product);
-                return new Result(true, Messages.ProductAdded);
+                return result;
             }
 
-            return new ErrorResult();
+            _productDal.Add(product);
+            return new Result(true, Messages.ProductAdded);
         }
 
         public IDataResult<List<Product>> GetAll()
@@ -80,6 +85,13 @@ namespace Business.Concrete
             int count = _productDal.GetAllByCategory(categoryId).Count;
             if (count > 10)
                 return new ErrorResult("En Fazla 10 ürün olabilir");
+
+            return new SuccessResult();
+        }
+        private IResult CheckIfProductNameExist(string productName)
+        {   
+            if (_productDal.GetAll(p=>p.ProductName == productName).Any())
+                return new ErrorResult(Messages.ProductNameAlreadyExist);
 
             return new SuccessResult();
         }
