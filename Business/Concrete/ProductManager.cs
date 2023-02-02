@@ -1,13 +1,18 @@
 ﻿using Business.Abstract;
+using Business.CCS;
 using Business.Constants;
+using Business.ValidationRules.FluentValidation;
 using Core;
+using Core.Aspects.Autofac.Validation;
 using Core.Utilities.Results;
 using DataAccess.Abstract;
 using DataAccess.Concrete.InMemory;
 using Entities.Concrete;
 using Entities.DTOs;
+using FluentValidation;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,22 +22,24 @@ namespace Business.Concrete
     public class ProductManager : IProductService
     {
         IProductDal _productDal;
+        ILogger _iLogger;
 
-        public ProductManager(IProductDal productDal)
+        public ProductManager(IProductDal productDal,ILogger logger)
         {
             _productDal = productDal;
+            _iLogger = logger;
         }
 
+        [ValidationAspect(typeof(ProductValidator))]
         public IResult Add(Product product)
         {
-            if (product.ProductName.Length < 2)
+            if (CheckIfProductCountOfCategoryCorrect(product.CategoryId).Succes)
             {
-                return new ErrorResult(Messages.ProductNameInvalid);
+                _productDal.Add(product);
+                return new Result(true, Messages.ProductAdded);
             }
 
-            _productDal.Add(product);
-
-            return new Result(true,Messages.ProductAdded);
+            return new ErrorResult();
         }
 
         public IDataResult<List<Product>> GetAll()
@@ -62,6 +69,19 @@ namespace Business.Concrete
         public IDataResult<List<ProductDetailDto>> GetProductsDetail()
         {
             return new  SuccessDataResult<List<ProductDetailDto>>(_productDal.GetProductsDetail());
+        }
+
+        public IResult Update(Product product)
+        {
+            throw new NotImplementedException();
+        }
+        private IResult CheckIfProductCountOfCategoryCorrect(int categoryId)
+        {
+            int count = _productDal.GetAllByCategory(categoryId).Count;
+            if (count > 10)
+                return new ErrorResult("En Fazla 10 ürün olabilir");
+
+            return new SuccessResult();
         }
     }
 }
