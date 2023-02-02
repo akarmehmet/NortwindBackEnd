@@ -54,7 +54,10 @@ namespace Core.DataAccess.EntityFramework
 
         public List<TEntity> GetAllByCategory(int categoryId)
         {
-            return null;
+            using (TContext context =  new TContext())
+            {
+                return null;
+            }
         }
 
         public void Update(TEntity entityentity)

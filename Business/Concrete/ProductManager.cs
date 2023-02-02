@@ -1,4 +1,5 @@
 ﻿using Business.Abstract;
+using Business.BusinessAspects.Autofac;
 using Business.CCS;
 using Business.Constants;
 using Business.ValidationRules.FluentValidation;
@@ -31,6 +32,7 @@ namespace Business.Concrete
             _categoryService = categoryService;
         }
 
+        [SecuredOperation("product.add,admin")]
         [ValidationAspect(typeof(ProductValidator))]
         public IResult Add(Product product)
         {
@@ -82,7 +84,7 @@ namespace Business.Concrete
         }
         private IResult CheckIfProductCountOfCategoryCorrect(int categoryId)
         {
-            int count = _productDal.GetAllByCategory(categoryId).Count;
+            int count = _productDal.GetAll(p=> p.CategoryId == categoryId).Count;
             if (count > 10)
                 return new ErrorResult("En Fazla 10 ürün olabilir");
 
